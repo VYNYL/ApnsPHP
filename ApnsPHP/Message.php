@@ -50,6 +50,8 @@ class ApnsPHP_Message
 
 	protected $_aCustomProperties; /**< @type mixed Custom properties container. */
 
+	protected $_bCustomPropertiesInReservedSpace = false;
+
 	protected $_nExpiryValue = 604800; /**< @type integer That message will expire in 604800 seconds (86400 * 7, 7 days) if not successful delivered. */
 
 	protected $_mCustomIdentifier; /**< @type mixed Custom message identifier. */
@@ -276,6 +278,17 @@ class ApnsPHP_Message
 		$this->_bMutableContent = $bMutableContent ? true : null;
 	}
 
+
+	public function setCustomPropertiesInReservedSpace($bCustomPropertiesInReservedSpace = false)
+	{
+		if (!is_bool($bCustomPropertiesInReservedSpace)) {
+			throw new ApnsPHP_Message_Exception(
+				"Invalid mutable-content value '{$bCustomPropertiesInReservedSpace}'"
+			);
+		}
+		$this->_bCustomPropertiesInReservedSpace = $bCustomPropertiesInReservedSpace ? true : null;
+	}
+
 	/**
 	 * Get if should set the mutable-content ios10 rich notifications flag
 	 *
@@ -442,9 +455,17 @@ class ApnsPHP_Message
 		}
 
 		if (is_array($this->_aCustomProperties)) {
+			if ($this->_bCustomPropertiesInReservedSpace) {
+				$aPayload[self::APPLE_RESERVED_NAMESPACE]['custom_properties'] = [];
+			}
 			foreach($this->_aCustomProperties as $sPropertyName => $mPropertyValue) {
 				$aPayload[$sPropertyName] = $mPropertyValue;
+
+				if ($this->_bCustomPropertiesInReservedSpace) {
+					$aPayload[self::APPLE_RESERVED_NAMESPACE]['custom_properties'][$sPropertyName] = $mPropertyValue;
+				}
 			}
+
 		}
 
 		return $aPayload;
