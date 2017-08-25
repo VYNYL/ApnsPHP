@@ -52,6 +52,8 @@ class ApnsPHP_Message
 
 	protected $_bCustomPropertiesInReservedSpace = false;
 
+	protected $_sCustomPropertiesContainer = '';
+
 	protected $_nExpiryValue = 604800; /**< @type integer That message will expire in 604800 seconds (86400 * 7, 7 days) if not successful delivered. */
 
 	protected $_mCustomIdentifier; /**< @type mixed Custom message identifier. */
@@ -230,6 +232,26 @@ class ApnsPHP_Message
 	public function getCategory()
 	{
 		return $this->_sCategory;
+	}
+
+	/**
+	 * Set the custom properties container
+	 *
+	 * @param  $sCustomPropertiesContainer @type string @optional A container name for sending custom properties.
+	 */
+	public function setCustomPropertiesContainer($sCustomPropertiesContainer = '')
+	{
+		$this->_sCustomPropertiesContainer = $sCustomPropertiesContainer;
+	}
+
+	/**
+	 * Get the name of the custom properties container
+	 *
+	 * @return @type string The name of the custom properties container
+	 */
+	public function getCustomPropertiesContainer()
+	{
+		return $this->_sCustomPropertiesContainer;
 	}
 
 	/**
@@ -458,8 +480,17 @@ class ApnsPHP_Message
 			if ($this->_bCustomPropertiesInReservedSpace) {
 				$aPayload[self::APPLE_RESERVED_NAMESPACE]['custom_properties'] = [];
 			}
+			$customPropertiesContainer = $this->getCustomPropertiesContainer();
+
+			if (!empty($customPropertiesContainer)) {
+				$aPayload[$customPropertiesContainer] = [];
+			}
 			foreach($this->_aCustomProperties as $sPropertyName => $mPropertyValue) {
-				$aPayload[$sPropertyName] = $mPropertyValue;
+				if (!empty($customPropertiesContainer)) {
+					$aPayload[$customPropertiesContainer][$sPropertyName] = $mPropertyValue;
+				} else {
+					$aPayload[$sPropertyName] = $mPropertyValue;
+				}
 
 				if ($this->_bCustomPropertiesInReservedSpace) {
 					$aPayload[self::APPLE_RESERVED_NAMESPACE]['custom_properties'][$sPropertyName] = $mPropertyValue;
